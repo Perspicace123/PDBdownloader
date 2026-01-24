@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="src/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="src/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="src/apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
+    <title>PDB DOWNLOADER</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #008c8c 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #008c8c 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .offline-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .main-content {
+            padding: 40px 30px;
+        }
+
+        .input-section {
+            margin-bottom: 40px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input {
+            flex: 1;
+            padding: 18px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px 35px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .example-chip {
+            background: #f0f4ff;
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #e0e7ff;
+        }
+
+        .example-chip:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .results-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f4ff;
+        }
+
+        .pdb-id-display {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .link-card {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .link-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .card-description {
+            color: #718096;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .link-url {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+            word-break: break-all;
+            margin-bottom: 20px;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            width: 100%;
+            text-align: center;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.2);
+        }
+
+        .info-btn {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        }
+
+        .info-section {
+            background: #f0f9ff;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            border-left: 5px solid #4299e1;
+        }
+
+        .info-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-content {
+            color: #4a5568;
+            line-height: 1.7;
+        }
+
+        .info-list {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+
+        .info-list li {
+            margin-bottom: 8px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #718096;
+            font-size: 0.9rem;
+            border-top: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .input-group {
+                flex-direction: column;
+            }
+
+            input, button {
+                width: 100%;
+            }
+
+            .links-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                border-radius: 15px;
+            }
+        }
+
+        .copy-btn {
+            background: #718096;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        .copy-btn:hover {
+            background: #4a5568;
+        }
+
+        .copy-success {
+            background: #48bb78 !important;
+        }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Offline PDB Download Link Generator</h1>
+            <p class="subtitle">Directly generate the download link for the standard PDB file</p>
+            <h1 style="font-size: 28px;">离线PDB链接生成器</h1>
+            <p style="font-size: 15px;" class="subtitle">直接生成标准PDB文件下载链接</p>
+        </header>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2 style="margin-bottom: 20px; color: #2d3748;">输入PDB ID(ENTER PDB ID）</h2>
+                <div class="input-group">
+                    <!-- 添加 label，使用 for 属性关联输入框 -->
+                    <label for="proteinPdbIdInput" class="sr-only">输入PDB ID</label>
+                    <input
+                        type="text"
+                        id="proteinPdbIdInput"
+                        placeholder="Examples: 1TIM, 1A2C, 4HHB, 6LU7"
+                        autocomplete="off"
+                        autocapitalize="characters"
+                    >
+                    <button id="generateBtn" aria-label="Start generating download links for the entered PDB ID">
+                        Start
+                    </button>
+                </div>
+            </div>
+
+            <div class="results-section" id="resultsSection">
+                <div class="result-header">
+                    <div>
+                        <div class="pdb-id-display" id="resultPdbId">PDB ID: </div>
+                        <p style="color: #718096; margin-top: 5px;">以下链接已生成，可直接点击下载或访问</p>
+                    </div>
+                    <div style="font-size: 0.9rem; color: #48bb78; font-weight: 600;">
+                    </div>
+                </div>
+
+                <div class="links-grid" id="linksGrid">
+                    <!-- 链接卡片将通过JavaScript动态生成 -->
+                </div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-title">Notice</div>
+                <div class="info-content">
+
+                    <ul class="info-list">
+                        <li><strong>PDB文件</strong>: 直接从RCSB PDB服务器下载蛋白质结构文件</li>
+                        <li><strong>压缩文件</strong>: 下载.gz格式的压缩文件，节省带宽</li>
+                        <li><strong>其他格式</strong>: 提供CIF、XML等不同格式的文件</li>
+                        <li><strong>信息页面</strong>: 生成相关数据库的查询链接</li>
+                    </ul>
+
+                    <p><strong>注意</strong>: 实际下载文件需要网络连接，但链接生成过程完全离线。</p>
+                    <p><strong>Notice</strong>: The actual download of the file requires an internet connection, but the link generation process is completely offline. </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 免责声明部分 -->
+        <section class="legal-notice" style="margin: 40px auto; padding: 25px; background: #ffffff; border-radius: 8px; max-width: 800px; border: 1px solid #e2e8f0;">
+        <h3 style="color: #2d3748; margin-bottom: 15px; font-size: 1.3rem; font-weight: 600;">Tool Declaration & Disclaimer</h3>
+        <p style="color: #4a5568; line-height: 1.6; margin-bottom: 12px;">
+            <strong>Nature of Tool:</strong> This website is a <strong>pure front-end convenience tool</strong>. Its sole function is to generate download links for public biological data based on user-input PDB IDs using standardized URL patterns.
+        </p>
+        <p style="color: #4a5568; line-height: 1.6; margin-bottom: 12px;">
+            <strong>No Data Storage/Modification:</strong> This tool <strong>does not store, host, redistribute, or modify</strong> any Protein Data Bank (PDB) files or related data. All files are served directly from their respective official public databases (e.g., RCSB PDB, PDBe).
+        </p>
+        <p style="color: #4a5568; line-height: 1.6; margin-bottom: 12px;">
+            <strong>No Affiliation:</strong> This is an independent utility and is not affiliated with, endorsed by, or sponsored by the RCSB PDB, PDBe, or UniProt consortium.
+        </p>
+        <p style="color: #4a5568; line-height: 1.6;">
+            Users are responsible for complying with the terms of use of the linked databases.
+        </p>
+        </section>
+
+        <footer>
+            <div class="logo">PDB Link Generator</div>
+            <p style="margin-top: 15px; font-size: 0.8rem; color: #a0aec0;">Based on the PDB standard naming rules • Fully offline operation • Data privacy and security</p>
+            <p style="margin-top: 15px; font-size: 0.8rem; color: #a0aec0;">基于PDB标准命名规则 • 完全离线运行 • 数据隐私安全</p>
+
+            <div class="author-info" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #718096; font-size: 0.9rem;">
+                <p style="margin-bottom: 5px;">
+                    Tool developed by <strong style="color: #4a5568;">Liao H.</strong>
+                </p>
+                <p style="margin-bottom: 5px;">
+                    For feedback, suggestions, or questions, please contact:
+                    <!-- 修改这里：将原来的静态邮箱链接替换为动态生成容器 -->
+                    <span id="contactEmail">[正在加载邮箱地址...]</span>
+                </p>
+                <p style="font-size: 0.8rem;">
+                    © <span id="currentYear"></span> Offline PDB Link Generator. All rights reserved.
+                </p>
+            </div>
+            <script>
+    // 自动更新版权年份
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+    const parts = ['liaohaocong', 'stu2025','jnu', 'edu', 'cn'];
+    const email = parts[0] + '@' + parts[1] + '.' + parts[2] + '.' + parts[3] + '.' + parts[4];
+    document.getElementById('contactEmail').innerHTML =
+        '<a href="mailto:' + email + '">' + email + '</a>';
+           </script>
+        </footer>
+
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const proteinPdbIdInput = document.getElementById('proteinPdbIdInput');
+            const generateBtn = document.getElementById('generateBtn');
+            const resultsSection = document.getElementById('resultsSection');
+            const resultPdbId = document.getElementById('resultPdbId');
+            const linksGrid = document.getElementById('linksGrid');
+            const exampleChips = document.querySelectorAll('.example-chip');
+
+            // 示例点击事件
+            exampleChips.forEach(chip => {
+                chip.addEventListener('click', function() {
+                    const pdbId = this.getAttribute('data-id');
+                    proteinPdbIdInput.value = pdbId;
+                    generateLinks(pdbId);
+                });
+            });
+
+            // 生成按钮点击事件
+            generateBtn.addEventListener('click', function() {
+                const pdbId = proteinPdbIdInput.value.trim().toUpperCase();
+                if (validatePdbId(pdbId)) {
+                    generateLinks(pdbId);
+                }
+            });
+
+            // 输入框回车事件
+            proteinPdbIdInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    generateBtn.click();
+                }
+            });
+
+            // 验证PDB ID格式
+            function validatePdbId(pdbId) {
+                if (!pdbId) {
+                    alert('请输入PDB ID');
+                    return false;
+                }
+
+                // PDB ID通常是4位字符，但现代PDB ID可能有更多位
+                if (!/^[0-9][A-Za-z0-9]{3,9}$/.test(pdbId)) {
+                    alert('请输入有效的PDB ID\n格式: 数字开头，后跟3-9位字母数字\n示例: 1TIM, 1A2C, 6LU7, 7A4M');
+                    return false;
+                }
+
+                return true;
+            }
+
+            // 生成链接
+            function generateLinks(pdbId) {
+                // 更新显示的PDB ID
+                resultPdbId.textContent = `PDB ID: ${pdbId}`;
+
+                // 生成链接数组
+                const links = generateAllLinks(pdbId);
+
+                // 清空之前的链接
+                linksGrid.innerHTML = '';
+
+                // 添加链接卡片
+                links.forEach(link => {
+                    const card = createLinkCard(link);
+                    linksGrid.appendChild(card);
+                });
+
+                // 显示结果区域
+                resultsSection.classList.add('active');
+
+                // 滚动到结果区域
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            // 生成所有链接
+            function generateAllLinks(pdbId) {
+                return [
+                    {
+                        title: 'Download PDB file',
+                        url: `https://files.rcsb.org/download/${pdbId}.pdb`,
+                        buttonText: 'Download PDB',
+                        buttonClass: 'download-btn'
+                    },
+                    {
+                        title: 'PDB file(.gz)',
+                        url: `https://files.rcsb.org/download/${pdbId}.pdb.gz`,
+                        buttonText: 'Download the compressed file',
+                        buttonClass: 'download-btn'
+                    },
+                    {
+                        title: 'mmCIF format file',
+                        url: `https://files.rcsb.org/download/${pdbId}.cif`,
+                        buttonText: 'Download CIF',
+                        buttonClass: 'download-btn'
+                    },
+                    {
+                        title: 'XML format file',
+                        url: `https://files.rcsb.org/download/${pdbId}.xml`,
+                        buttonText: 'Download XML',
+                        buttonClass: 'download-btn'
+                    },
+                    {
+                        title: 'RCSB PDB page',
+                        url: `https://www.rcsb.org/structure/${pdbId}`,
+                        buttonText: 'For more details',
+                        buttonClass: 'download-btn info-btn'
+                    },
+                    {
+                        title: 'PDBe Page',
+                        url: `https://www.ebi.ac.uk/pdbe/entry/pdb/${pdbId}`,
+                        buttonText: 'Visit PDBe',
+                        buttonClass: 'download-btn info-btn'
+                    },
+                    {
+                        title: 'UniProt search',
+                        url: `https://www.uniprot.org/uniprotkb?query=${pdbId}`,
+                        buttonText: 'Search for UniProt',
+                        buttonClass: 'download-btn search-btn'
+                    },
+                    {
+                        title: 'PPDBsum page',
+                        url: `https://www.ebi.ac.uk/pdbsum/${pdbId}`,
+                        buttonText: 'Visit PDBsum',
+                        buttonClass: 'download-btn info-btn'
+                    },
+                    {
+                        title: 'FASTA sequence',
+                        url: `https://www.rcsb.org/fasta/entry/${pdbId}/display`,
+                        buttonText: 'View FASTA',
+                        buttonClass: 'download-btn'
+                    },
+                    {
+                        title: 'Structural factor file',
+                        url: `https://files.rcsb.org/download/${pdbId}-sf.cif`,
+                        buttonText: 'Download structure factor',
+                        buttonClass: 'download-btn'
+                    }
+                ];
+            }
+
+            // 创建链接卡片
+            function createLinkCard(link) {
+                const card = document.createElement('div');
+                card.className = 'link-card';
+
+                // 在 createLinkCard 函数的模板字符串中，修改 onclick 调用
+                card.innerHTML = `
+                    <div class="card-title">${link.title}</div>
+                    <div class="link-url">${link.url}</div>
+                    <div style="display: flex; gap: 10px;">
+                        <a href="${link.url}" target="_blank" class="${link.buttonClass}">
+                            ${link.buttonText}
+                        </a>
+                        <!-- 注意：这里传入了 event 参数 -->
+                        <button class="copy-btn" onclick="copyToClipboard('${link.url}', event)">Copy Link</button>
+                    </div>
+                `;
+
+
+
+                return card;
+            }
+
+            // 页面加载后自动聚焦输入框
+            proteinPdbIdInput.focus();
+
+            // 从URL参数中获取PDB ID（如果有）
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlPdbId = urlParams.get('pdbid') || urlParams.get('id');
+            if (urlPdbId && validatePdbId(urlPdbId)) {
+                proteinPdbIdInput.value = urlPdbId;
+                setTimeout(() => generateLinks(urlPdbId), 500);
+            }
+        });
+
+        // 复制到剪贴板函数（全局可用）
+        // 复制到剪贴板函数（全局可用）- 修复版
+        function copyToClipboard(text, event) { // 添加 event 参数
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target; // 现在 event 是已定义的参数
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied';
+        btn.classList.add('copy-success');
+
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('copy-success');
+                }, 2000);
+            }).catch(err => {
+                console.error('Copy failed: ', err);
+                alert('Copy failed, please copy the link manually');
+            });
+        }
+
+        // 提供URL生成功能
+        function generateDirectUrl(pdbId, format = 'pdb') {
+            const formats = {
+                'pdb': `https://files.rcsb.org/download/${pdbId}.pdb`,
+                'pdb.gz': `https://files.rcsb.org/download/${pdbId}.pdb.gz`,
+                'cif': `https://files.rcsb.org/download/${pdbId}.cif`,
+                'xml': `https://files.rcsb.org/download/${pdbId}.xml`,
+                'fasta': `https://www.rcsb.org/fasta/entry/${pdbId}/display`,
+                'sf.cif': `https://files.rcsb.org/download/${pdbId}-sf.cif`
+            };
+
+            return formats[format] || formats['pdb'];
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+    <!-- 背景：与网站主色调一致的圆角方形 -->
+    <rect width="512" height="512" rx="80" fill="#667eea"/>
+    
+    <!-- 主体文字 "PDB" -->
+    <text x="256" y="300" 
+          font-family="Arial, sans-serif" 
+          font-size="200" 
+          font-weight="bold" 
+          text-anchor="middle" 
+          fill="#FFFFFF">
+        PDB
+    </text>
+    
+    <!-- 右下角的下载箭头 (完全按照“⬇️”Emoji造型绘制) -->
+    <!-- 整个箭头组定位到右下角 -->
+    <g transform="translate(380, 390) scale(2.3)">
+        <!-- 粗壮的箭杆 -->
+        <rect x="-6" y="-20" width="12" height="40" fill="#FFFFFF" rx="3"/>
+        <!-- 宽大的箭头头 -->
+        <path d="M -20 20 L 0 45 L 20 20" fill="#FFFFFF"/>
+    </g>
+</svg>
